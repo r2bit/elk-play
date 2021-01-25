@@ -1,5 +1,14 @@
 ---
-- name: create directories for tls assets
+- name: create directories for local tls assets
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ tls_ca_dir }}"
+    - "{{ tls_node_dir }}"
+  delegate_to: localhost
+
+- name: create directories for remote tls assets
   become: true
   file:
     path: "{{ remote_tls_dir }}"

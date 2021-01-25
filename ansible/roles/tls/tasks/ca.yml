@@ -6,14 +6,17 @@
   loop:
     - "{{ tls_ca_dir }}"
     - "{{ tls_node_dir }}"
+  delegate_to: localhost
 
 - stat:
     path: "{{ tls_ca_cert }}"
   register: tls_ca_cert_output
+  delegate_to: localhost
 
 - stat:
     path: "{{ tls_ca_key }}"
   register: tls_ca_key_output
+  delegate_to: localhost
 
 - name: create ca
   shell: "cfssl gencert -initca {{ tls_config_dir }}/ca-csr.json | cfssljson -bare ca -"
@@ -21,3 +24,4 @@
     chdir: "{{ tls_ca_dir }}"
   register: create_ca_output
   when: tls_ca_cert_output.stat.exists == False and tls_ca_key_output.stat.exists == False
+  delegate_to: localhost

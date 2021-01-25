@@ -13,7 +13,7 @@
       when: hostvars[item].ansible_eth1.ipv4.address is defined
 
 - name: bootstrap tls ca assets
-  hosts: localhost
+  hosts: kibana
   tasks:
     - name: configure ca
       include_role:
