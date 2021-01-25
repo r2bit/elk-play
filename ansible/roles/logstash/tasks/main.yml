@@ -1,0 +1,44 @@
+---
+- name: importing latest logstash gpg
+  rpm_key:
+    key: '{{ elastic_gpg_key }}'
+    state: present
+  register: installed_key
+  until: installed_key is succeeded
+
+- name: add elasticsearch yum repository
+  yum_repository:
+    name: elasticsearch
+    description: Elasticsearch repository
+    file: '{{ es_repo_file }}'
+    baseurl: '{{ es_yum_url }}'
+    gpgcheck: True
+    gpgkey: '{{ elastic_gpg_key }}'
+    enabled: True
+    state: present
+
+- name: install logstash package
+  yum:
+    name: logstash
+    state: present
+    update_cache: True
+  register: installed_package
+  until: installed_package is succeeded
+
+- name: install logstash configs
+  template:
+    src: "templates/{{ item }}.jinja2"
+    dest: "/etc/logstash/conf.d/{{ item }}"
+    owner: logstash
+    group: logstash
+    mode: "0644"
+  loop:
+    - 10-filebeat-input.conf
+    - 90-elasticsearch-output.conf
+
+- name: logstash service
+  service:
+    name: logstash
+    state: started
+    enabled: true
+  become: true

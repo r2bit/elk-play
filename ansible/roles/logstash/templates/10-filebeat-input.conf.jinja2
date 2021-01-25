@@ -1,0 +1,9 @@
+input {
+    beats {
+        port => {{ logstash_listen_port }}
+        ssl => true
+        ssl_certificate => "{{ logstash_ssl_certificate_file }}"
+        ssl_key => "{{ logstash_ssl_key_file }}"
+        codec => "plain"
+    }
+}

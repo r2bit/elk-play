@@ -1,0 +1,10 @@
+output {
+    elasticsearch {
+        action => "index"
+        cacert => "{{ logstash_ssl_ca_file }}"
+        hosts => {{ es_hosts }}
+        user => {{ es_auth_user }}
+        password => {{ es_auth_password }}
+        codec => "plain"
+    }
+}

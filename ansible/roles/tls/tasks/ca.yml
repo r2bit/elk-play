@@ -1,0 +1,23 @@
+---
+- name: create directories for tls assets
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ tls_ca_dir }}"
+    - "{{ tls_node_dir }}"
+
+- stat:
+    path: "{{ tls_ca_cert }}"
+  register: tls_ca_cert_output
+
+- stat:
+    path: "{{ tls_ca_key }}"
+  register: tls_ca_key_output
+
+- name: create ca
+  shell: "cfssl gencert -initca {{ tls_config_dir }}/ca-csr.json | cfssljson -bare ca -"
+  args:
+    chdir: "{{ tls_ca_dir }}"
+  register: create_ca_output
+  when: tls_ca_cert_output.stat.exists == False and tls_ca_key_output.stat.exists == False

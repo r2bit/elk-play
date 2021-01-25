@@ -1,0 +1,13 @@
+---
+logstash_listen_port: 5044
+logstash_ssl_certificate_file: ""
+logstash_ssl_key_file: ""
+logstash_ssl_ca_file: ""
+
+es_hosts: ["https://localhost:9200"]
+es_auth_user: ""
+es_auth_password: ""
+
+es_yum_url: 'https://artifacts.elastic.co/packages/7.x/yum'
+es_repo_file: 'elastic-7'
+elastic_gpg_key: https://artifacts.elastic.co/GPG-KEY-elasticsearch

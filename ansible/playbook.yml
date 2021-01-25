@@ -1,0 +1,124 @@
+---
+- name: defaults
+  hosts: all
+  become: true
+  tasks:
+    - name: write /etc/hosts
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '.*{{ item }}$'
+        line: "{{ hostvars[item].ansible_eth1.ipv4.address }} {{item}}"
+        state: present
+      with_items: "{{ groups.all }}"
+      when: hostvars[item].ansible_eth1.ipv4.address is defined
+
+- name: bootstrap tls ca assets
+  hosts: localhost
+  tasks:
+    - name: configure ca
+      include_role:
+        name: tls
+        tasks_from: ca
+
+
+- name: elasticsearch cluster
+  hosts: esnodes
+  tasks:
+    - name: configure node tls
+      include_role:
+        name: tls
+        tasks_from: node
+        public: yes
+    - name: elasticsearch service
+      include_role:
+        name: elastic.elasticsearch
+  vars:
+    es_heap_size: "512m"
+    es_enable_http_ssl: true
+    es_enable_transport_ssl: true
+    es_api_basic_auth_username: "elastic"
+    es_api_basic_auth_password: "changeme"
+    es_ssl_certificate_authority: "{{ tls_ca_cert }}"
+    es_ssl_certificate: "{{ tls_node_cert }}"
+    es_ssl_key: "{{ tls_node_key }}"
+    es_config:
+      network.host: ["{{ hostvars[inventory_hostname]['ansible_eth1']['ipv4']['address'] }}","_local_" ]
+      discovery.seed_hosts: "{{ esnode_ips }}"
+      cluster.initial_master_nodes: "{{ esnode_names }}"
+
+
+- name: kibana server
+  hosts: kibana
+  tasks:
+    - name: configure node tls
+      include_role:
+        name: tls
+        tasks_from: node
+        public: yes
+    - name: set kibana key permissions
+      become: true
+      file:
+        path: "{{ remote_tls_key }}"
+        mode: "0644"
+    - name: kibana service
+      include_role:
+        name: fedelemantuano.kibana
+  vars:
+    kibana_api_host: "{{ hostvars[inventory_hostname]['ansible_eth1']['ipv4']['address'] }}"
+    kibana_config:
+      server.name: "{{ inventory_hostname }}"
+      server.host: "{{ hostvars[inventory_hostname]['ansible_eth1']['ipv4']['address'] }}"
+      server.ssl.enabled: true
+      server.ssl.certificate: "{{ remote_tls_cert }}"
+      server.ssl.key: "{{ remote_tls_key }}"
+      elasticsearch.hosts: "[{% for esnode in groups.esnodes %}'https://{{ esnode }}:9200/',{% endfor %}]"
+      elasticsearch.ssl.certificateAuthorities: "{{ remote_tls_ca }}"
+      elasticsearch.username: "elastic"
+      elasticsearch.password: "changeme"
+
+
+- name: logstash server
+  hosts: logstash
+  become: true
+  tasks:
+    - name: configure node tls
+      include_role:
+        name: tls
+        tasks_from: node
+        public: yes
+    - name: convert private key
+      command:
+        cmd: "openssl pkcs8 -topk8 -inform PEM -outform PEM -in {{ remote_tls_key }} -out {{ remote_tls_key }}.pkcs8 -nocrypt"
+        creates: "{{ remote_tls_key }}.pkcs8"
+    - name: set logstash key permissions
+      become: true
+      file:
+        path: "{{ remote_tls_key }}.pkcs8"
+        mode: "0644"
+    - name: logstash service
+      include_role:
+        name: logstash
+  vars:
+    logstash_listen_port: 5042
+    logstash_ssl_certificate_file: "{{ remote_tls_cert }}"
+    logstash_ssl_key_file: "{{ remote_tls_key }}.pkcs8"
+    logstash_ssl_ca_file: "{{ remote_tls_ca }}"
+    es_hosts: "[{% for esnode in groups.esnodes %}'https://{{ esnode }}:9200/',{% endfor %}]"
+    es_auth_user: "elastic"
+    es_auth_password: "changeme"
+
+- name: netdata monitoring
+  hosts: all
+  become: true
+  tasks:
+    - name: netdata service
+      include_role:
+        name: mrlesmithjr.netdata
+    - name: claim node
+      command:
+        cmd: "{{ netdata_claim_command }}"
+        creates: /.netdata_claimed
+      when: netdata_claim_command != ""
+  vars:
+    netdata_git_version_tag: "v1.28.0"
+    netdata_alarm_configure: true

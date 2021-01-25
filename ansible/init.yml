@@ -1,0 +1,6 @@
+---
+- name: initialise
+  hosts: all
+  tasks:
+    - name: setup
+      setup:

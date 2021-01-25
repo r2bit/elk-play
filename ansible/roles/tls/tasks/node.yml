@@ -1,0 +1,52 @@
+---
+- name: create directories for tls assets
+  become: true
+  file:
+    path: "{{ remote_tls_dir }}"
+    state: directory
+    mode: '0755'
+
+- stat:
+    path: "{{ tls_node_cert }}"
+  register: node_cert_file
+  delegate_to: localhost
+  become: false
+
+- stat:
+    path: "{{ tls_node_key }}"
+  register: node_key_file
+  delegate_to: localhost
+  become: false
+
+- name: render request
+  template: src=node-req.json.jinja2
+            dest="{{ tls_node_req }}"
+  delegate_to: localhost
+  become: false
+
+- name: enroll certificate
+  shell: "cfssl gencert -ca {{ tls_ca_cert }} -ca-key {{ tls_ca_key }} -config {{ tls_config_dir }}/ca-config.json -profile node {{ ansible_nodename }}-req.json | cfssljson -bare {{ ansible_nodename }}"
+  args:
+    chdir: "{{ tls_node_dir }}"
+  register: enroll_node_output
+  delegate_to: localhost
+  become: false
+  when: node_cert_file.stat.exists == False and node_key_file.stat.exists == False
+
+- name: copy ca
+  become: true
+  copy: src="{{ tls_ca_cert }}"
+        dest="{{ remote_tls_ca }}"
+        mode='0644'
+
+- name: copy cert
+  become: true
+  copy: src="{{ tls_node_cert }}"
+    dest="{{ remote_tls_cert }}"
+    mode='0644'
+
+- name: copy key
+  become: true
+  copy: src="{{ tls_node_key }}"
+    dest="{{ remote_tls_key }}"
+    mode='0600'

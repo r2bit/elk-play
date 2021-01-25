@@ -1,0 +1,15 @@
+---
+tls_dir: "{{ playbook_dir}}/../_local/tls"
+tls_ca_dir: "{{ tls_dir }}/ca"
+tls_ca_cert: "{{ tls_ca_dir }}/ca.pem"
+tls_ca_key: "{{ tls_ca_dir }}/ca-key.pem"
+tls_node_dir: "{{ tls_dir }}/nodes"
+tls_node_cert: "{{ tls_node_dir }}/{{ ansible_nodename }}.pem"
+tls_node_key: "{{ tls_node_dir }}/{{ ansible_nodename }}-key.pem"
+tls_node_req: "{{ tls_node_dir }}/{{ ansible_nodename }}-req.json"
+tls_config_dir: "{{ playbook_dir}}/../tls"
+
+remote_tls_dir: "/etc/pki/tls/elk"
+remote_tls_ca: "{{ remote_tls_dir }}/ca.pem"
+remote_tls_cert: "{{ remote_tls_dir }}/node.pem"
+remote_tls_key: "{{ remote_tls_dir }}/node-key.pem"

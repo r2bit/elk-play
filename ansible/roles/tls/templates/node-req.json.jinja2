@@ -1,0 +1,11 @@
+{
+    "CN": "{{ ansible_nodename }}",
+    "hosts": [
+        "{{ ansible_nodename }}",
+        "{{ ansible_eth1.ipv4.address }}"
+    ],
+    "key": {
+        "algo": "ecdsa",
+        "size": 384
+    }
+}
