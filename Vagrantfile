@@ -1,7 +1,9 @@
-IMAGE_NAME = "centos/8"
 BASENET = "192.168.56"
 ESNODES = 3
 NETDATA_CLAIM = ""
+
+#######################
+IMAGE_NAME = "centos/8"
 
 Vagrant.configure("2") do |config|
   config.ssh.insert_key = false
