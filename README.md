@@ -49,7 +49,7 @@ vagrant destroy -f
 * Kibana node: `BASENET`.20 (kibana)
 * Logstash node: `BASENET`.30 (logstash)
 * Everything except Logstash' beats (5044 -> 5042) input listen on default ports with TLS on
-* User/pass for the whole stack is left defualt: elastic/changeme
+* User/pass for the whole stack is left default: elastic/changeme
 * Kibana dashboard: https://`BASENET`.20:5601/
 * Netdata dashboard: http://`NODEIP`:19999/
 
